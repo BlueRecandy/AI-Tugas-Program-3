@@ -191,10 +191,10 @@ def do_knn(k: int, metric_method='minkowski', test_size=0.1):
 
 
 if __name__ == '__main__':
-    do_knn(2)
     do_knn(3, 'euclidean')
     do_knn(5)
     do_knn(7)
     do_knn(9, 'euclidean')
+    do_knn(11)
     most_accurate = find_most_optimal_accuracy()
     print(f'Most accurate result: k={most_accurate["k"]} with accuracy={most_accurate["accuracy"]}% using method={most_accurate["method"]}')
