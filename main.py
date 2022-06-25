@@ -96,7 +96,7 @@ def write_result_group(result_group: list, k: int, test_accuracy: float):
     sheet['C1'] = 'Hasil Klasifikasi'
     sheet['D1'] = 'Akurasi'
 
-    sheet['D2'] = round(test_accuracy)*100
+    sheet['D2'] = test_accuracy*100
 
     for i in range(0, len(result_group)):
         rowAddress = 2 + i
@@ -109,35 +109,61 @@ def write_result_group(result_group: list, k: int, test_accuracy: float):
         sheet[f'B{rowAddress}'] = actual
         sheet[f'C{rowAddress}'] = prediction
 
-    workbook.save('OutputValidasi.xls')
+    workbook.save('OutputValidasi.xlsx')
     workbook.close()
 
 
-def do_knn(k: int, metric_method='minkowski'):
+def do_knn(k: int, metric_method='minkowski', test_size=0.1):
+    print('-'*40)
+    print(f'Creating report for k={k} with method {metric_method}')
+    print('-'*40)
+
+    print(f'Reading dataset from file...')
     df = read_file()
     columns_name = select_column_name(df)
     rows_data = get_rows_values(df, columns_name)
     rows_label_data = get_rows_label_values(df)
+    print(f'Reading dataset from file complete')
 
-    x_train, x_test, y_train, y_test = split_dataset(rows_data, rows_label_data, 0.1)
+    print(f'Splitting dataset with {test_size} of dataset as test...')
+    x_train, x_test, y_train, y_test = split_dataset(rows_data, rows_label_data, test_size)
+    print(f'Splitting dataset with {test_size} of dataset as test complete')
 
+    print(f'Separating the id and attribute from dataset...')
     x_train_no_id = get_rows_data_without_id(x_train)
     x_test_no_id = get_rows_data_without_id(x_test)
-    x_train_id = get_rows_only_id(x_train)
     x_test_id = get_rows_only_id(x_test)
+    print(f'Separating the id and attribute from dataset complete.')
 
+    print('Creating classifier using train data..')
     knn = create_classifier(x_train_no_id, y_train, k, metric_method)
+    print('Creating classifier using train data complete.')
 
-    train_predict_result = predict_data(knn, x_train_no_id)
+    print('Generating prediction result for test data...')
     test_predict_result = predict_data(knn, x_test_no_id)
+    print('Generating prediction result for test data complete.')
 
-    train_accuracy = calculate_accuracy(y_train, train_predict_result)
+    print('Calculating test accuracy...')
     test_accuracy = calculate_accuracy(y_test, test_predict_result)
+    print('Calculating test accuracy complete.')
 
+    print('Grouping test result...')
     test_result_group = grouping_result(test_predict_result, x_test_id, y_test)
+    print('Grouping test result complete.')
 
+    print('Writing to Output File...')
     write_result_group(test_result_group, k, test_accuracy)
+    print('Writing to Output File complete.')
+
+    print('-' * 40)
+    print(f'End of report k={k} with method {metric_method}')
+    print('-' * 40)
+    print(' ')
 
 
 if __name__ == '__main__':
+    do_knn(3, 'manhattan')
     do_knn(5)
+    do_knn(7)
+    do_knn(9, 'euclidean')
+    do_knn(2)
