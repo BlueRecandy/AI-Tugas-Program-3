@@ -10,6 +10,8 @@ from sklearn import preprocessing, metrics
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 
+accuracy_list = []
+
 
 def read_file() -> Union[dict[Any, DataFrame], DataFrame]:
     df = pd.read_excel('DataSet_TB3.xlsx')
@@ -54,7 +56,30 @@ def predict_data(knn: KNeighborsClassifier, prediction_data):
 
 
 def calculate_accuracy(actual_result, test_result) -> float:
-    return metrics.accuracy_score(actual_result, test_result)
+    return metrics.accuracy_score(actual_result, test_result)*100
+
+
+def add_accuracy_list(accuracy: float, k: int, method: str):
+    accuracy_obj = {
+        'accuracy': accuracy,
+        'k': k,
+        'method': method
+    }
+    accuracy_list.append(accuracy_obj)
+
+
+def find_most_optimal_accuracy() -> dir:
+    best_accuracy = -1
+    best_obj = None
+    for i in range(0, len(accuracy_list)):
+        accuracy_obj = accuracy_list[i]
+        accuracy = accuracy_obj['accuracy']
+
+        if best_accuracy < accuracy:
+            best_accuracy = accuracy
+            best_obj = accuracy_obj
+
+    return best_obj
 
 
 def grouping_result(test_result, test_result_id, actual_result) -> list[list[int, int]]:
@@ -96,7 +121,7 @@ def write_result_group(result_group: list, k: int, test_accuracy: float):
     sheet['C1'] = 'Hasil Klasifikasi'
     sheet['D1'] = 'Akurasi'
 
-    sheet['D2'] = test_accuracy*100
+    sheet['D2'] = test_accuracy
 
     for i in range(0, len(result_group)):
         rowAddress = 2 + i
@@ -155,6 +180,10 @@ def do_knn(k: int, metric_method='minkowski', test_size=0.1):
     write_result_group(test_result_group, k, test_accuracy)
     print('Writing to Output File complete.')
 
+    print('Adding this test accuracy to accuracy report...')
+    add_accuracy_list(test_accuracy, k, metric_method)
+    print('Adding this test accuracy to accuracy report complete')
+
     print('-' * 40)
     print(f'End of report k={k} with method {metric_method}')
     print('-' * 40)
@@ -162,8 +191,10 @@ def do_knn(k: int, metric_method='minkowski', test_size=0.1):
 
 
 if __name__ == '__main__':
-    do_knn(3, 'manhattan')
+    do_knn(2)
+    do_knn(3, 'euclidean')
     do_knn(5)
     do_knn(7)
     do_knn(9, 'euclidean')
-    do_knn(2)
+    most_accurate = find_most_optimal_accuracy()
+    print(f'Most accurate result: k={most_accurate["k"]} with accuracy={most_accurate["accuracy"]}% using method={most_accurate["method"]}')
